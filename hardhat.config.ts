@@ -36,12 +36,6 @@ subtask(TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS).setAction(
  * Verify Contract task
  * Run: `npx verifyContract --address <ADDRESS> --args '["0x..", 123, "0x..."]'`
  */
-task("verifyContract", "Verify a contract")
-    .addParam("address", "the contract address", "0x...", types.string)
-    .addParam("args", "constructor arguments", {}, types.json)
-    .setAction(async function (taskArgs, hre) {
-        await verifyContract(hre, taskArgs.address, taskArgs.args);
-    });
 
 const config: HardhatUserConfig = {
     solidity: {

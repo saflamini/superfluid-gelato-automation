@@ -16,10 +16,14 @@ contract CloseStream is OpsReady {
     IConstantFlowAgreementV1 public cfa; // the stored constant flow agreement class address
     ISuperToken superToken;
 
-    bytes32 taskId;
+    bytes32 public taskId;
+
+    address owner;
 
     constructor(ISuperfluid _host, ISuperToken _superToken ,address _ops) 
     OpsReady(_ops, address(this)){
+
+    owner = msg.sender;    
     
     host = _host;
 
@@ -34,11 +38,10 @@ contract CloseStream is OpsReady {
     function createCloseStreamTask(address receiver, uint256 duration) external {
     bytes memory timeArgs = abi.encode(uint128(block.timestamp + duration), duration);
 
-    console.log(block.timestamp);
     console.log(block.timestamp + duration);
-    console.log(duration);
 
-    bytes memory execData = abi.encodeWithSelector(this.closeStream.selector, receiver);
+
+    bytes memory execData = abi.encodeWithSelector(this.closeStream.selector,msg.sender, receiver);
 
     Module[] memory modules = new Module[](2);
 
@@ -53,7 +56,7 @@ contract CloseStream is OpsReady {
 
      taskId = ops.createTask(address(this), execData, moduleData, ETH);
 
-     console.logBytes32(taskId);
+
 
     }
 
@@ -65,6 +68,8 @@ contract CloseStream is OpsReady {
 
     _cfaLib.deleteFlow(sender, receiver, superToken);
 
+    taskId = bytes32(0);
+
     }
 
     modifier onlyOps() {
@@ -72,4 +77,15 @@ contract CloseStream is OpsReady {
         _;
     }
   
+        receive() external payable {
+        console.log("----- receive:", msg.value);
+    }
+
+    function withdraw() external returns (bool) {
+        require(owner == msg.sender,'NOT_ALLOWED');
+
+        (bool result, ) = payable(msg.sender).call{value: address(this).balance}("");
+        return result;
+    }
+
 }

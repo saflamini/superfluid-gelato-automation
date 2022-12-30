@@ -2,7 +2,7 @@
 
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
-export const CloseStreamAddress = "0xCC7FA88DB7df720EA72872ad7C19fd85026047d9";
+export const CloseStreamAddress = "0x9415B572f3562C12fDe1EB4F5C9291762495130B";
 
 export const Host = "0x22ff293e14F1EC3A09B137e9e06084AFd63adDF9"
 

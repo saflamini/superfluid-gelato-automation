@@ -1,6 +1,6 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
-import { BytesLike, Wallet } from "ethers";
+
 import hre, { ethers } from "hardhat";
 import { CloseStream__factory } from "../typechain-types/factories/src/CloseStream__factory";
 import { Ops, Host, SuperToken, getDeployer } from "./Helpers";
