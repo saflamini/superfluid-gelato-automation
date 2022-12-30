@@ -21,11 +21,9 @@ const createTaskStopStream = async () => {
         console.log("Transaction broadcasted, waiting...");
         await txn.wait()
 
-        console.log(
-            "Execute Authorize Flow Operator with Full Control Operation...",
-        );
+        console.log("Creating the task")
+     
     
-
 
         console.log('Getting Flow ....')    
 

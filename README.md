@@ -19,112 +19,111 @@ In order to run this project, you need to have the following dependencies instal
 
 ## Project Setup
 To set up the project run the following command:
+```ts
+yarn // installing the node_modules
 ```
-make
-```
-
-This runs the `all:` command which does the following:
-
-- `clean`: removes the `/out` and `/cache` files that are generated when you run `forge build`
-- `remove`: removes gitmodules and lib and recreates this
-- `install`: installs the required modules and generates the remappings.txt file for VSCode integration
-- `setup-yarn`: installs package dependencies inside `package.json`
-- `update`: updates forge dependencies
-- `solc`: installs the specified solc version
-- `build`: builds the contracts
-
-> NOTE: You can also run these separately, e.g. `make install`
-
-## Deployment and Interaction w/ Hardhat Console
-Open a terminal window and start up a local hardhat node: `yarn hardhat-node` or `npx hardhat node`.
-
-Open another terminal window and deploy the contracts locally: `yarn deploy <NETWORK_NAME>` or `npx hardhat run scripts/deploy.ts --network <NETWORK_NAME>`
-
-Start a hardhat console session: `yarn console <NETWORK_NAME>` or `npx hardhat console --network <NETWORK_NAME>`
-
-Attach the newly deployed contract:
-
-`const simpleACLCloseResolver = await hre.ethers.getContractAt("SimpleACLCloseResolver", <CONTRACT_ADDRESS>);`
-
-Now you can interact with the contract in the CLI.
-
-> NOTE: Use localhost as `<NETWORK_NAME>` if you want to deploy locally.
-
-## Contract Verification
-Contract verification occurs by default after deploying via Hardhat. This will require multiple retries due to the bytecode not being deployed until after a certain number of confirmations has gone through.
-
-To verify a contract manually via the CLI, we need to use a custom created Hardhat task, passing in the constructor args:
-```
-yarn hardhat-verify --address <CONTRACT_ADDRESS> --args '[<END_TIME>, "<CFA_ADDRESS>", "<SUPERTOKEN_ADDRESS>", "<SENDER_ADDRESS>", "<RECEIVER_ADDRESS>"]'
-```
-> NOTE: You can also set the SKIP_VERIFICATION variable to true in `.env` to skip the contract verification process after contract deployment.
-
-## Tests
-To test with Hardhat:
-1. Set up a local hardhat node:
-`npx hardhat node`
-
-2. Run the tests
-`yarn hardhat-test --network localhost` or `npx hardhat test --network localhost`
-
-3. Coverage tests (optional)
-`yarn coverage`
-
-To test with Forge: `forge test`
-
-## TDD (Test Driven Development)
-To have a TDD workflow, we use nodemon to track changes to .ts/.sol files for hardhat driven test development or .sol files for forge driven test development.
-Forge driven test development command: `yarn forge-dev`
-Hardhat driven test development command: `yarn hardhat-dev`
-
-## Coverage
-To get a coverage report, run `yarn coverage` or `npx hardhat coverage`.
-
-## Steps
-To get this up and running and helping you close a stream, here is a step-by-step guide:
-
-0. Create a flow using the [dashboard](https://app.superfluid.finance) or using one of the SDK's or a custom script. You will use some of this information when deploying the resolver contract.
-
-1. Deploy the gelato resolver contract.
-
-You can do this with forge or Hardhat.
-
-You can get your desired end time by creating a date object in javascript and then calling `.getTime()` to get the time in milliseconds and dividing by 1000 to convert that to seconds. Example:
-
-```js
-//say I want to have my stream closed on Dec 1st 2022 and 12pm UTC
-//create date object
-let date = new Date('December 1, 2022 12:00:00');
-let timestampInSeconds = date.getTime() / 1000;
+```ts
+yarn compile // compiling with hardhat the project
 ```
 
-Forge command: `make deploy`
 
-Hardhat command: `yarn deploy <NETWORK_NAME>` or `npx hardhat run scripts/deploy.ts --network <NETWORK_NAME>`
 
-> NOTE: You will have to provide/update the necessary .env values for this to work.
+## Deployment, creating the stream, authorizing, creating the task and mock the execution
 
-(optional) Verify your contract - this makes it slightly easier when setting up the task on gelato ops.
-If you don't verify, you just need to copy the ABI into the input when prompted for it when setting up your task with Gelato. Refer above for the commands on contract verification.
+### Local on a forked network 
+Copy the .env.template--> and enter your private jey, infura Id and Etherscan if required 
+We will open a second terminal and run:
 
-2. Authorize delete control to the flow operator (gelato ops).
-
-```
-npx hardhat run scripts/authorizeControl.ts --network <NETWORK_NAME>
+```ts
+yarn fork // fork the network into a local hardhat node
 ```
 
-3. Set up the Gelato Ops
- - Click `Create Task`
- - Copy and paste the [address](https://docs.superfluid.finance/superfluid/protocol-developers/networks) of Superfluid Host contract into the `Execute` contract address input
- - Select `callAgreement(address agreementClass, bytes callData, bytes userData)` as the `Function to be automated`
- - Click `Dynamic inputs via Resolver` and paste the address of where your resolver was deployed to into the `Resolver contract address` input
- - Select `checker()` as the `Function to be called at the resolver (to check task status)`
- - Give the task a name and create it. 
+Contract deploy:
+```ts
+yarn deploy localhost
+```
+The console will log something like:
 
- > Note: You will need to top up some funds in Gelato for the executor to execute transactions on your behalf.
+```ts
+Close Sream deployed succsessfully at:  0xCC7FA88DB7df720EA72872ad7C19fd85026047d9
+```
+We will copy the deployed address into the './scripts/Helpers.ts' so it will be available later.
 
-## Next Steps
-The written example is only for closing streams, but you can easily modify the resolver to:
+```ts
+export const CloseStreamAddress = "0xCC7FA88DB7df720EA72872ad7C19fd85026047d9";
+```
 
- - Automatically upgrade tokens for your account when your supertoken balance is at a certain amount
- - Handle managing multiple streams
+We will now start a stream
+```ts
+yarn startStream localhost    // in scripts/startStream.ts 
+```
+
+Authorize our smart contract to stop the stream
+```ts
+yarn authorizeControl  localhost   // in scripts/authorizeControl.ts 
+```
+
+Create the task
+```ts
+yarn createTaskStopStream  localhost   // in scripts/createTaskStopStream.ts 
+```
+
+We are goig to mock the Gelato execution, so we will need exactly the start time of the task, when deplpoying on goerli we wont require it as the executiojn will be done by the Gelato executors
+
+```ts
+eth_sendTransaction
+  Contract call:       CloseStream#createCloseStreamTask
+  Transaction:         0x079cd1d093a7b9b093df487af947088b7502637d2a55592c9fd4cafba135f2e3
+  From:                0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
+  To:                  0xcc7fa88db7df720ea72872ad7c19fd85026047d9
+  Value:               0 ETH
+  Gas used:            202686 of 202686
+  Block #7850260:      0xb649932d9314e7d02697e63ce31fccde93580b0cb6c3db7c5fb853fb5b74b2cf
+
+  console.log:
+    1666974177
+```
+
+We copy the timestamp '1666974177' into the stopStreamscript and we mock the gelato execution:
+```ts
+yarn stopStream localhost
+```
+
+### Goerli
+
+Contract deploy:
+```ts
+yarn deploy goerli
+```
+The console will log something like:
+
+```ts
+Close Sream deployed succsessfully at:  0xCC7FA88DB7df720EA72872ad7C19fd85026047d9
+```
+We will verify our contract to interact later with etherscan
+```ts
+yarn verify goerli  // in scripts/verify.ts 
+```
+
+We will copy the deployed address into the './scripts/Helpers.ts' so it will be available later.
+
+```ts
+export const CloseStreamAddress = "0xCC7FA88DB7df720EA72872ad7C19fd85026047d9";
+```
+
+We will now start a stream
+```ts
+yarn startStream goerli  // in scripts/startStream.ts 
+```
+
+Authorize our smart contract to stop the stream
+```ts
+yarn authorizeControl  goerli  // in scripts/authorizeControl.ts 
+```
+
+Create the task
+```ts
+yarn createTaskStopStream  goerli   // in scripts/createTaskStopStream.ts 
+```
+
+and thats it, we will wait 

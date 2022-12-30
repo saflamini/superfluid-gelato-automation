@@ -15,11 +15,13 @@
         "console": "hardhat console",
         "hardhat-node": "hardhat node",
         "hardhat-verify": "hardhat verifyContract",
+        "compile": "hardhat compile",
         "deploy": "hardhat run scripts/deploy.ts --network",
         "startStream": "hardhat run scripts/startStream.ts --network",
         "stopStream": "hardhat run scripts/stopStream.ts --network",
         "authorizeControl": "hardhat run scripts/authorizeControl.ts --network",
-        "createTaskStopStream":"hardhat run scripts/createTaskStopStream.ts --network"
+        "createTaskStopStream":"hardhat run scripts/createTaskStopStream.ts --network",
+        "verify":"hardhat run scripts/verify.ts --network"
    
     },
     "repository": {

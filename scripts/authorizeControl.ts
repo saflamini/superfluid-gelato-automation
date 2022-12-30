@@ -19,9 +19,6 @@ const authorizeControl = async () => {
         // create updateFlowOperatorPermissions for delete operation
         const op = sf.cfaV1.updateFlowOperatorPermissions({
             superToken: SuperToken,
-
-            // this is the Gelato Ops address for the network you deploy this on:
-            // see https://docs.gelato.network/resources/contract-addresses for a list of addresses
             flowOperator: CloseStreamAddress,
             permissions: 4, // delete only
             flowRateAllowance: "0",
@@ -32,11 +29,10 @@ const authorizeControl = async () => {
         );
         const txn = await op.exec(deployer);
 
-        console.log("Transaction broadcasted, waiting...");
-        const receipt = await txn.wait();
+            await txn.wait();
 
-        console.log("Transaction has been mined.");
-        console.log("Transaction Receipt:", receipt);
+        console.log("Authorization successfull");
+
     } catch (err) {
         console.error(err);
     }

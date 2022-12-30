@@ -29,7 +29,7 @@ const startStream = async () => {
         });
 
         console.log(
-            "Execute Authorize Flow Operator with Full Control Operation...",
+            "Execute Start Stream"
         );
         const txn = await op.exec(deployer);
 

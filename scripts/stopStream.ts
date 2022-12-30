@@ -32,7 +32,7 @@ const stopStream = async () => {
   const FEE = utils.parseEther("0.01")
   const timeArgs = utils.defaultAbiCoder.encode(
     ["uint256", "uint256"],
-    [1666973389, 300]
+    [1666974177, 300]
   );
 
   let moduleData = {
@@ -40,7 +40,7 @@ const stopStream = async () => {
     args: [timeArgs],
   };
 
-  await hre.ethers.provider.send('evm_setNextBlockTimestamp', [1666973389]);
+  await hre.ethers.provider.send('evm_setNextBlockTimestamp', [1666974177]);
 
   await ops
   .connect(executor)
@@ -57,14 +57,11 @@ const stopStream = async () => {
  
  
         console.log(
-            "Execute Authorize Flow Operator with Full Control Operation...",
+            "Impersonating the Execution",
         );
     
 
 
-        console.log('Getting Flow ....')    
-
-        
         console.log("Create Superfluid Framework with SDK-Core");
         const sf = await Framework.create({
             chainId: 1337,
@@ -73,7 +70,9 @@ const stopStream = async () => {
             provider: ethers.provider,
         });
 
-
+        console.log(
+          "retrieving the stream",
+      );
         let flow = await sf.cfaV1.getFlow({sender:deployer.address, receiver, superToken:SuperToken, providerOrSigner:deployer})
         console.log(flow);
 
