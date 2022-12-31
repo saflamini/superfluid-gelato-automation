@@ -128,3 +128,8 @@ yarn createTaskStopStream  goerli   // in scripts/createTaskStopStream.ts
 
 Our contract is verified [here](https://goerli.etherscan.io/address/0x9415B572f3562C12fDe1EB4F5C9291762495130B#readContract)
 Gelato task logs can be found [here](https://ops-interface-vue-git-feature-search-gelato.vercel.app/task/0x06d05ff8edec3efc0686f351f351e5d780e7a248d7e3607662068393005a0f08?chainId=5)
+
+For the time being we will use to check the status of our task at:
+```bash
+ https://ops-interface-vue-git-feature-search-gelato.vercel.app/task/{{taskId}}?chainId=5
+```
