@@ -1,5 +1,8 @@
 # Simple ACL Close Example
 
+You can read the blog at: https://medium.com/@javier_donoso/gelato-v2-superfluid-eb13166ac414
+and see the walkthrough video: https://www.youtube.com/watch?v=OphQ2BdXJDQ&t=1s 
+
 ## About
 A super simple foundry/Hardhat hybrid project which utilizes Superfluid's CFA Access Control List feature and Gelato to close a flow at a predetermined time in the future.
 

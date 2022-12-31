@@ -32,7 +32,7 @@ const stopStream = async () => {
   const FEE = utils.parseEther("0.01")
   const timeArgs = utils.defaultAbiCoder.encode(
     ["uint256", "uint256"],
-    [1666974177, 300]
+    [1666973589, 300]
   );
 
   let moduleData = {
@@ -40,7 +40,7 @@ const stopStream = async () => {
     args: [timeArgs],
   };
 
-  await hre.ethers.provider.send('evm_setNextBlockTimestamp', [1666974177]);
+  await hre.ethers.provider.send('evm_setNextBlockTimestamp', [1666973589]);
 
   await ops
   .connect(executor)
