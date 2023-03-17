@@ -3,103 +3,144 @@ pragma solidity 0.8.17;
 
 import "hardhat/console.sol";
 
-import {OpsReady} from './gelato/OpsReady.sol';
+import {AutomateTaskCreator} from './gelato/AutomateTaskCreator.sol';
 import {ISuperToken} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
 import "./gelato/Types.sol";
-import {IVestingScheduler} from "@superfluid-finance/ethereum-contracts/automation-contracts/interfaces/IVestingScheduler.sol";
+import { IVestingScheduler } from "./interface/IVestingScheduler.sol";
+import { VestingScheduler } from "./VestingScheduler.sol";
 
-contract VestingAutomation is OpsReady {
+contract VestingAutomation is AutomateTaskCreator {
+    /// @dev The SuperToken to be used for vesting
     ISuperToken vestingToken;
-    IVestingScheduler public vestingScheduler;
+    /// @dev The VestingScheduler contract
+    VestingScheduler public vestingScheduler;
 
-    bytes32 public taskId;
+    //structs for start and end vesting tasks
+    struct VestingStartTask {
+        ISuperToken token;
+        address sender;
+        address receiver;
+        uint256 startDate;
+        uint256 timeScheduled;
+    }
 
-    address owner;
+    struct VestingEndTask {
+        ISuperToken token;
+        address sender;
+        address receiver;
+        uint256 endDate;
+        uint256 timeScheduled;
+    }
 
-//TODO - need to add address of vesting contract as constructor param 
-    constructor(ISuperToken _vestingSuperToken, address _ops, IVestingScheduler _vestingScheduler)) 
-        OpsReady(_ops, address(this)){
-        owner = msg.sender;    
+    //mapping of taskID to vesting tasks
+    mapping(bytes32 => VestingStartTask) public vestingStartTasks;
+    mapping(bytes32 => VestingEndTask) public vestingEndTasks;
+
+    constructor(ISuperToken _vestingSuperToken, address _automate, address _fundsOwner, VestingScheduler _vestingScheduler)
+        AutomateTaskCreator(_automate, _fundsOwner){
 
         vestingScheduler = _vestingScheduler;
         vestingToken = _vestingSuperToken;
     }
 
     //call this function to set up a vesting task
-    function createVestingTask(address sender, uint256 receiver) external {
+    function createVestingTask(address sender, address receiver) external returns (bytes32 startTaskId, bytes32 endTaskId){
 
-        (uint32 _cliffAndFlowDate, uint32 _endDate) = vestingScheduler.getVestingSchedule(vestingToken, sender, receiver);
+        //use sender, receiver, and vestingToken to get the vesting schedule programmatically from VestingScheduler contract
+        IVestingScheduler.VestingSchedule memory vSchedule = vestingScheduler.getVestingSchedule(address(vestingToken), sender, receiver);
 
-        _createVestingStartTask(vestingToken, sender, receiver, _cliffAndFlowDate);
-        _createEndVestingTask(vestingToken, sender, receiver, _endDate);
+        uint32 _cliffAndFlowDate = vSchedule.cliffAndFlowDate;
+        uint32 _endDate = vSchedule.endDate;
+
+        //create the start + end vesting tasks in the same transaction
+        startTaskId = _createVestingStartTask(sender, receiver, _cliffAndFlowDate);
+        endTaskId = _createEndVestingTask(sender, receiver, _endDate);
+
+        return (startTaskId, endTaskId);
     }
 
     //this function will create the start vesting task - i.e. executeCliffAndFlow
-    function _createVestingStartTask(address sender, address receiver, uint256 startDate) internal {
+    function _createVestingStartTask(address sender, address receiver, uint256 startDate) internal returns (bytes32 startTaskId){
     
-        bytes memory timeArgs = abi.encode(startDate);
+        bytes memory startTime = abi.encode(startDate);
 
-        bytes memory execData = abi.encodeWithSelector(this.executeStartVesting.selector, token, sender, receiver);
+        bytes memory execData = abi.encodeWithSelector(this.executeStartVesting.selector, vestingToken, sender, receiver);
 
-        Module[] memory modules = new Module[](2);
-        modules[0] = Module.TIME;
-        modules[1] = Module.SINGLE_EXEC;
+        ModuleData memory moduleData = ModuleData({
+            modules: new Module[](2),
+            args: new bytes[](2)
+        });
+        moduleData.modules[0] = Module.TIME;
+        moduleData.modules[1] = Module.SINGLE_EXEC;
 
-        bytes[] memory args = new bytes[](1);
-        args[0] = timeArgs;
-
-        ModuleData memory moduleData = ModuleData(modules, args);
+        moduleData.args[0] = startTime;
+        moduleData.args[1] = _singleExecModuleArg();
 
         //note that ETH here is a placeholder for the native asset on any network you're using
-        taskId = ops.createTask(address(this), execData, moduleData, ETH);
+        startTaskId = _createTask(address(this), execData, moduleData, ETH);
+
+        //store the start task in the mapping
+        vestingStartTasks[startTaskId] = VestingStartTask({
+            token: vestingToken,
+            sender: sender,
+            receiver: receiver,
+            startDate: startDate,
+            timeScheduled: block.timestamp
+        });
+
+        return startTaskId;
     }
 
     //this function will create the delete vesting task - i.e. executeEndVesting
-    function _createEndVestingTask(address sender, address receiver, uint256 endDate) internal {
+    function _createEndVestingTask(address sender, address receiver, uint256 endDate) internal returns(bytes32 endTaskId) {
     
-        bytes memory timeArgs = abi.encode(endDate);
+        bytes memory endTime = abi.encode(endDate);
 
-        bytes memory execData = abi.encodeWithSelector(this.executeStopVesting.selector, vestingToken, sender, receiver);
+        bytes memory execData = abi.encodeWithSelector(this.executeStartVesting.selector, vestingToken, sender, receiver);
 
-        Module[] memory modules = new Module[](2);
+        ModuleData memory moduleData = ModuleData({
+            modules: new Module[](2),
+            args: new bytes[](2)
+        });
+        moduleData.modules[0] = Module.TIME;
+        moduleData.modules[1] = Module.SINGLE_EXEC;
 
-        modules[0] = Module.TIME;
-        modules[1] = Module.SINGLE_EXEC;
-
-        bytes[] memory args = new bytes[](1);
-        args[0] = timeArgs;
+        moduleData.args[0] = endTime;
+        moduleData.args[1] = _singleExecModuleArg();
 
         //note that ETH here is a placeholder for the native asset on any network you're using
-        ModuleData memory moduleData = ModuleData(modules, args);
+        endTaskId = _createTask(address(this), execData, moduleData, ETH);
 
-        taskId = ops.createTask(address(this), execData, moduleData, ETH);
+        //store the end task in the mapping
+        vestingEndTasks[endTaskId] = VestingEndTask({
+            token: vestingToken,
+            sender: sender,
+            receiver: receiver,
+            endDate: endDate,
+            timeScheduled: block.timestamp
+        });
+        
+        return endTaskId;
     }
 
     //this function will be called by the OpsReady contract to execute the start vesting task on the vesting cliff date
-    function executeStartVesting(address sender, address receiver) external onlyOps {
+    function executeStartVesting(address sender, address receiver) external {
 
         //handle fee logic
-        (uint256 fee, address feeToken) = ops.getFeeDetails();
+        (uint256 fee, address feeToken) = _getFeeDetails();
         _transfer(fee, feeToken);
 
         vestingScheduler.executeCliffAndFlow(vestingToken, sender, receiver);
     }
 
     //this function will be called by the OpsReady contract to execute the end vesting task on the vesting end date
-    function executeStopVesting(address sender, address receiver) external onlyOps {
+    function executeStopVesting(address sender, address receiver) external {
 
         //handle fee logic
-        (uint256 fee, address feeToken) = ops.getFeeDetails();
+        (uint256 fee, address feeToken) = _getFeeDetails();
         _transfer(fee, feeToken);
 
         vestingScheduler.executeEndVesting(vestingToken, sender, receiver);
-
-        taskId = bytes32(0);
-    }
-
-    modifier onlyOps() {
-        require(msg.sender == address(ops), "OpsReady: onlyOps");
-        _;
     }
   
     receive() external payable {
@@ -107,7 +148,8 @@ contract VestingAutomation is OpsReady {
     }
 
     function withdraw() external returns (bool) {
-        require(owner == msg.sender,'NOT_ALLOWED');
+        // only the funds owner can withdraw funds - note that fundsOwner is defined in the AutomateTaskCreator contract
+        require(fundsOwner == msg.sender,'NOT_ALLOWED');
 
         (bool result, ) = payable(msg.sender).call{value: address(this).balance}("");
         return result;

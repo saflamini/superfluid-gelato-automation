@@ -13,7 +13,7 @@ struct ModuleData {
     bytes[] args;
 }
 
-interface IOps {
+interface IAutomate {
     function createTask(
         address execAddress,
         bytes calldata execDataOrSelector,
@@ -28,19 +28,6 @@ interface IOps {
     function gelato() external view returns (address payable);
 
     function taskTreasury() external view returns (ITaskTreasuryUpgradable);
-
-    function exec(
-        address taskCreator,
-        address execAddress,
-        bytes memory execData,
-        ModuleData calldata moduleData,
-        uint256 txFee,
-        address feeToken,
-        bool useTaskTreasuryFunds,
-        bool revertOnFailure
-    ) external;
-
-
 }
 
 interface ITaskTreasuryUpgradable {
