@@ -148,6 +148,13 @@ contract VestingAutomation is AutomateTaskCreator {
         console.log("----- receive:", msg.value);
     }
 
+    function changeOwner(address newFundsOwner) external  {
+        // only the funds owner can execute this fn
+        require(fundsOwner == msg.sender,'NOT_ALLOWED');
+        fundsOwner = newFundsOwner;
+    }
+
+
     function withdraw() external returns (bool) {
         // only the funds owner can withdraw funds - note that fundsOwner is defined in the AutomateTaskCreator contract
         require(fundsOwner == msg.sender,'NOT_ALLOWED');
