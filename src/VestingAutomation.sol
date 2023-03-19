@@ -46,6 +46,7 @@ contract VestingAutomation is AutomateTaskCreator {
     //call this function to set up a vesting task
     function createVestingTask(address sender, address receiver) external returns (bytes32 startTaskId, bytes32 endTaskId){
 
+        require(msg.sender == fundsOwner, "Only funds owner can create tasks");
         //use sender, receiver, and vestingToken to get the vesting schedule programmatically from VestingScheduler contract
         IVestingScheduler.VestingSchedule memory vSchedule = vestingScheduler.getVestingSchedule(address(vestingToken), sender, receiver);
 
