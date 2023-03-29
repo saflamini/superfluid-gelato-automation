@@ -60,9 +60,9 @@ const config: HardhatUserConfig = {
               },  
               chainId: 1337
           },
-        goerli: {
-            url: `https://goerli.infura.io/v3/${INFURA_ID}`,
-            chainId: 5,
+        mumbai : {
+            url: `${process.env.MUMBAI_RPC}` ,
+            chainId: 80001,
             accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
         },
     },

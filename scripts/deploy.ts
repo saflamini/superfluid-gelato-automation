@@ -7,7 +7,7 @@ import { Ops, Host, SuperToken, getDeployer } from "./Helpers";
 
 import { verifyContract } from "./verify";
 
-
+const gelatoAutomateMumbai = "0xB3f5503f93d5Ef84b06993a1975B9D21B962892F";
 
 async function main() {
     try {
@@ -21,7 +21,7 @@ async function main() {
 
        await deployer.sendTransaction({ to: closeStream.address, value: initialEth, gasLimit: 10000000, nonce: nonce + 1});
 
-        console.log('Close Sream deployed succsessfully at: ',closeStream.address)
+        console.log('Close Stream deployed succsessfully at: ',closeStream.address)
 
     } catch (err) {
         console.error(err);

@@ -15,7 +15,14 @@ contract VestingAutomation is AutomateTaskCreator {
     /// @dev The VestingScheduler contract
     VestingScheduler public vestingScheduler;
 
-    //structs for start and end vesting tasks
+    address public primaryFundsOwner;
+
+    /// @dev struct for 'start vesting' tasks
+    /// @param token The SuperToken to be used for vesting
+    /// @param sender The sender i.e. the address sending the tokens
+    /// @param receiver The receiver i.e. the address receiving the vested tokens
+    /// @param startDate The date when the vesting starts
+    /// @param timeScheduled The time when the task was scheduled
     struct VestingStartTask {
         ISuperToken token;
         address sender;
@@ -24,6 +31,12 @@ contract VestingAutomation is AutomateTaskCreator {
         uint256 timeScheduled;
     }
 
+    /// @dev struct for 'end vesting' tasks
+    /// @param token The SuperToken to be used for vesting
+    /// @param sender The sender i.e. the address sending the tokens
+    /// @param receiver The receiver i.e. the address receiving the vested tokens
+    /// @param endDate The date when the vesting ends
+    /// @param timeScheduled The time when the task was scheduled
     struct VestingEndTask {
         ISuperToken token;
         address sender;
@@ -32,18 +45,36 @@ contract VestingAutomation is AutomateTaskCreator {
         uint256 timeScheduled;
     }
 
-    //mapping of taskID to vesting tasks
+    ///@dev mapping of start taskID to 'start vesting' tasks
     mapping(bytes32 => VestingStartTask) public vestingStartTasks;
+    ///@dev mapping of end taskID to 'end vesting' tasks
     mapping(bytes32 => VestingEndTask) public vestingEndTasks;
 
-    constructor(ISuperToken _vestingSuperToken, address _automate, address _fundsOwner, VestingScheduler _vestingScheduler)
-        AutomateTaskCreator(_automate, _fundsOwner){
+    ///@dev mapping of new funds owners 
+    ///this is needed because the fundsOwner variable in the gelato AutomateTaskCreator contract is immutable
+    ///we want to allow the controller of the contract to add a secondary address in case a private key is lost or exposed
+    ///if we only allow the primary funds owner to to withdraw funds, we would be locked out of the contract
+    mapping(address => bool) public fundsOwners;
 
+    ///@dev constructor
+    ///@param _vestingSuperToken The SuperToken to be used for vesting
+    ///@param _automate The address of the AutomateTaskCreator contract (from Gelato Core)
+    ///@param _primaryFundsOwner The address of the contract owner/address that will pay for the tasks by sending tokens to this contract
+    ///@param _vestingScheduler The address of the VestingScheduler contract
+    constructor(ISuperToken _vestingSuperToken, address _automate, address _primaryFundsOwner, VestingScheduler _vestingScheduler)
+        AutomateTaskCreator(_automate, _primaryFundsOwner){
+
+        primaryFundsOwner = _primaryFundsOwner;
+        fundsOwners[_primaryFundsOwner] = true;
         vestingScheduler = _vestingScheduler;
         vestingToken = _vestingSuperToken;
     }
 
-    //call this function to set up a vesting task
+    ///@dev call this function to set up a vesting task
+    ///@param sender The sender i.e. the address sending the tokens
+    ///@param receiver The receiver i.e. the address receiving the vested tokens
+    ///@return startTaskId The taskID of the start vesting task
+    ///@return endTaskId The taskID of the end vesting task
     function createVestingTask(address sender, address receiver) external returns (bytes32 startTaskId, bytes32 endTaskId){
 
         require(msg.sender == fundsOwner, "Only funds owner can create tasks");
@@ -60,7 +91,11 @@ contract VestingAutomation is AutomateTaskCreator {
         return (startTaskId, endTaskId);
     }
 
-    //this function will create the start vesting task - i.e. executeCliffAndFlow
+    ///@dev this function will create the start vesting task - i.e. executeCliffAndFlow
+    ///@param sender The sender i.e. the address sending the tokens
+    ///@param receiver The receiver i.e. the address receiving the vested tokens
+    ///@param startDate The date when the vesting starts
+    ///@return startTaskId The taskID of the start vesting task
     function _createVestingStartTask(address sender, address receiver, uint256 startDate) internal returns (bytes32 startTaskId){
     
         bytes memory startTime = abi.encode(startDate);
@@ -92,7 +127,11 @@ contract VestingAutomation is AutomateTaskCreator {
         return startTaskId;
     }
 
-    //this function will create the delete vesting task - i.e. executeEndVesting
+    ///@dev this function will create the delete vesting task - i.e. executeEndVesting
+    ///@param sender The sender i.e. the address sending the tokens
+    ///@param receiver The receiver i.e. the address receiving the vested tokens
+    ///@param endDate The date when the vesting ends
+    ///@return endTaskId The taskID of the end vesting task
     function _createEndVestingTask(address sender, address receiver, uint256 endDate) internal returns(bytes32 endTaskId) {
     
         bytes memory endTime = abi.encode(endDate);
@@ -124,7 +163,9 @@ contract VestingAutomation is AutomateTaskCreator {
         return endTaskId;
     }
 
-    //this function will be called by the OpsReady contract to execute the start vesting task on the vesting cliff date
+    ///@dev this function will be called by the OpsReady contract to execute the start vesting task on the vesting cliff date
+    ///@param sender The sender i.e. the address sending the tokens
+    ///@param receiver The receiver i.e. the address receiving the vested tokens
     function executeStartVesting(address sender, address receiver) external {
 
         //handle fee logic
@@ -134,7 +175,9 @@ contract VestingAutomation is AutomateTaskCreator {
         vestingScheduler.executeCliffAndFlow(vestingToken, sender, receiver);
     }
 
-    //this function will be called by the OpsReady contract to execute the end vesting task on the vesting end date
+    ///@dev this function will be called by the OpsReady contract to execute the end vesting task on the vesting end date
+    ///@param sender The sender i.e. the address sending the tokens
+    ///@param receiver The receiver i.e. the address receiving the vested tokens
     function executeStopVesting(address sender, address receiver) external {
 
         //handle fee logic
@@ -144,20 +187,33 @@ contract VestingAutomation is AutomateTaskCreator {
         vestingScheduler.executeEndVesting(vestingToken, sender, receiver);
     }
   
+    ///@dev this function will receive native asset for gas payments
+    ///note that this contract must have enough of the native asset tokens to pay for the gas fees of executing vesting tasks
     receive() external payable {
         console.log("----- receive:", msg.value);
     }
 
-    function changeOwner(address newFundsOwner) external  {
+    ///@dev this function will allow the current contract owner to change ownership
+    ///@param newFundsOwner The new owner of the contract
+    function addFundsOwner(address newFundsOwner) external  {
         // only the funds owner can execute this fn
-        require(fundsOwner == msg.sender,'NOT_ALLOWED');
-        fundsOwner = newFundsOwner;
+        require(fundsOwners[msg.sender] == true,'NOT_ALLOWED');
+        fundsOwners[newFundsOwner] = true;
     }
 
+    ///@dev this function will allow the current contract owner to change ownership
+    ///@param removedFundsOwner The new owner of the contract
+    function removeFundsOwner(address removedFundsOwner) external  {
+        // only a funds owner can execute this fn
+        require(removedFundsOwner != primaryFundsOwner,'CANNOT_REMOVE_PRIMARY_FUNDS_OWNER');
+        require(fundsOwners[msg.sender] == true,'NOT_ALLOWED');
+        fundsOwners[removedFundsOwner] = false;
+    }
 
+    ///@dev this function will allow the current contract owner to withdraw funds (i.e. the native asset within the contract)
     function withdraw() external returns (bool) {
         // only the funds owner can withdraw funds - note that fundsOwner is defined in the AutomateTaskCreator contract
-        require(fundsOwner == msg.sender,'NOT_ALLOWED');
+        require(fundsOwners[msg.sender] == true,'NOT_ALLOWED');
 
         (bool result, ) = payable(msg.sender).call{value: address(this).balance}("");
         return result;
