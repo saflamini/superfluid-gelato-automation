@@ -5,7 +5,6 @@ import hre, { ethers } from "hardhat";
 import { VestingAutomation__factory } from "../typechain-types/factories/src/VestingAutomation__factory";
 import { getDeployer } from "./Helpers";
 import { Framework } from "@superfluid-finance/sdk-core";
-import { verifyContract } from "./verify";
 
 const gelatoAutomateMumbai = "0xB3f5503f93d5Ef84b06993a1975B9D21B962892F";
 const superfluidVestingSchedulerMumbai = "0x2a00b420848D723A74c231B559C117Ee003B1829" // can find this at docs.superfluid.finance  
