@@ -1,12 +1,12 @@
 # Gelato Vesting Automation Example
 
-You can read the blog at: https://medium.com/@javier_donoso/gelato-v2-superfluid-eb13166ac414
-and see the walkthrough video: https://www.youtube.com/watch?v=OphQ2BdXJDQ&t=1s 
-
 ## About
 A super simple project which utilizes Superfluid Vesting Scheduler and Gelato to automate vesting start and end tasks.
 
-Example has been verified on Mumbai here: https://mumbai.polygonscan.com/address/0x194C9F3F955F48FF38e4e4F7bFc9A2869374Fd0a
+## Live Examples on Mumbai
+A live example of a vesting automation contract has been deployed here: https://mumbai.polygonscan.com/address/0x633B1C635a20006455532bB095C369750E4282d1
+- It is set for DAIx token vesting
+You can find the deployed Vesting Scheduler Contract on Mumbai here: https://mumbai.polygonscan.com/address/0x2a00b420848d723a74c231b559c117ee003b1829 
 
 ## Built With
 
@@ -23,7 +23,7 @@ Example has been verified on Mumbai here: https://mumbai.polygonscan.com/address
 - [x] README completed
 - [ ] Tests Ready
 
-#### NOTE
+## NOTE
 This project is meant for demonstration purposes only. We recommend writing a full test suite and customizing to fit individual use cases. Also note that some foundry scaffolding is here if you want it, but this guide assumes you'll use hardhat instead.
 
 ## Prerequisites
@@ -42,11 +42,11 @@ yarn compile // compiling with hardhat the project
 
 ## Deploying the Contract & Creating Gelato Tasks
 
-### For running this on a live test network
+#### For running this on a live test network
 Copy the .env.template--> and enter your private key, rpc URL and Etherscan if you'd like to verify the vesting automation contract
 
 
-#### Contract deployment
+### Contract deployment
 Constructor Params:
 - Vesting Token: each vesting automation contract is set to only support a single token
 - Automate: the address of the deployed Gelato Automate contract
@@ -60,6 +60,7 @@ You must set your own custom params inside of the deploy script.
 - This deploy script will fund the contract with a small amount of MATIC, but you should seek to properly manage the funds within the contract according to Gelato Guidelines: https://docs.gelato.network/developer-services/automate/paying-for-your-transactions
 - Note that there is built in access control which allows 'owners' to manage the funds within the contract
 
+### Steps
 ```ts
 yarn hardhat run ./scripts/deployVestingAutomation.ts --network mumbai // change 'mumbai' to your network of choice
 ```
