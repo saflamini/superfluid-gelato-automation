@@ -96,7 +96,7 @@ contract VestingAutomation is AutomateTaskCreator {
     ///@param receiver The receiver i.e. the address receiving the vested tokens
     ///@param startDate The date when the vesting starts
     ///@return startTaskId The taskID of the start vesting task
-    function _createVestingStartTask(address sender, address receiver, uint256 startDate) internal returns (bytes32 startTaskId){
+    function _createVestingStartTask(address sender, address receiver, uint256 startDate) internal returns (bytes32 public startTaskId){
     
         bytes memory startTime = abi.encode(startDate);
 

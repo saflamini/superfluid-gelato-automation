@@ -1,10 +1,12 @@
-# Simple ACL Close Example
+# Gelato Vesting Automation Example
 
 You can read the blog at: https://medium.com/@javier_donoso/gelato-v2-superfluid-eb13166ac414
 and see the walkthrough video: https://www.youtube.com/watch?v=OphQ2BdXJDQ&t=1s 
 
 ## About
-A super simple foundry/Hardhat hybrid project which utilizes Superfluid's CFA Access Control List feature and Gelato to close a flow at a predetermined time in the future.
+A super simple foundry/Hardhat hybrid project which utilizes Superfluid's CFA Access Control List feature, the Superfluid Vesting Scheduler and Gelato to automate vesting start and end tasks.
+
+Example has been verified on Mumbai here: https://mumbai.polygonscan.com/address/0x194C9F3F955F48FF38e4e4F7bFc9A2869374Fd0a
 
 ## Built With
 
@@ -48,7 +50,7 @@ yarn deploy localhost
 The console will log something like:
 
 ```ts
-Close Sream deployed succsessfully at:  0xCC7FA88DB7df720EA72872ad7C19fd85026047d9
+Close Stream deployed succsessfully at:  0xCC7FA88DB7df720EA72872ad7C19fd85026047d9
 ```
 We will copy the deployed address into the './scripts/Helpers.ts' so it will be available later.
 

@@ -4,14 +4,6 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 export const CloseStreamAddress = "0x0e9F4638f89C6CF2DedC5E5CCe7fE264f85fD126";
 
-export const Host = "0x22ff293e14F1EC3A09B137e9e06084AFd63adDF9"
-
-export const SuperToken = "0xF2d68898557cCb2Cf4C10c3Ef2B034b2a69DAD00"
-
-export const Ops = "0xc1C6805B857Bef1f412519C4A842522431aFed39" //Grlato automate ops contract
-
-export const GelatoExecutor = "0x683913B3A32ada4F8100458A3E1675425BdAa7DF";
-
 export const receiver = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8";
 
 export const getDeployer = async (hre:HardhatRuntimeEnvironment) =>{
