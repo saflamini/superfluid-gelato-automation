@@ -6,6 +6,7 @@ A super simple project which utilizes Superfluid Vesting Scheduler and Gelato to
 ## Live Examples on Mumbai
 A live example of a vesting automation contract has been deployed here: https://mumbai.polygonscan.com/address/0x633B1C635a20006455532bB095C369750E4282d1
 - It is set for DAIx token vesting
+
 You can find the deployed Vesting Scheduler Contract on Mumbai here: https://mumbai.polygonscan.com/address/0x2a00b420848d723a74c231b559c117ee003b1829 
 
 ## Built With
