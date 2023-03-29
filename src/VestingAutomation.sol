@@ -96,11 +96,14 @@ contract VestingAutomation is AutomateTaskCreator {
     ///@param receiver The receiver i.e. the address receiving the vested tokens
     ///@param startDate The date when the vesting starts
     ///@return startTaskId The taskID of the start vesting task
-    function _createVestingStartTask(address sender, address receiver, uint256 startDate) internal returns (bytes32 public startTaskId){
+    function _createVestingStartTask(address sender, address receiver, uint256 startDate) internal returns (bytes32 startTaskId){
     
-        bytes memory startTime = abi.encode(startDate);
+        //note that the '100' value is only a placeholder
+        //this is technically the 'interval' at which the task will be executed
+        //but because we are using the SINGLE_EXEC module, the task will only be executed once
+        bytes memory startTime = abi.encode(uint128(startDate), 100);
 
-        bytes memory execData = abi.encodeWithSelector(this.executeStartVesting.selector, vestingToken, sender, receiver);
+        bytes memory execData = abi.encodeWithSelector(this.executeStartVesting.selector, sender, receiver);
 
         ModuleData memory moduleData = ModuleData({
             modules: new Module[](2),
@@ -134,9 +137,9 @@ contract VestingAutomation is AutomateTaskCreator {
     ///@return endTaskId The taskID of the end vesting task
     function _createEndVestingTask(address sender, address receiver, uint256 endDate) internal returns(bytes32 endTaskId) {
     
-        bytes memory endTime = abi.encode(endDate);
+        bytes memory endTime = abi.encode(uint128(endDate), 100);
 
-        bytes memory execData = abi.encodeWithSelector(this.executeStartVesting.selector, vestingToken, sender, receiver);
+        bytes memory execData = abi.encodeWithSelector(this.executeStartVesting.selector, sender, receiver);
 
         ModuleData memory moduleData = ModuleData({
             modules: new Module[](2),
